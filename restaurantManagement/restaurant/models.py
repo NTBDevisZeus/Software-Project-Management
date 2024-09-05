@@ -15,7 +15,7 @@ class User(AbstractUser):
         CUSTOMER = 2,'customer'
 
     id = models.AutoField(primary_key=True)
-    role = models.IntegerField(choices=USER_ROLES.choices)
+    role = models.IntegerField(choices=USER_ROLES.choices, null = True)
     phone_number = models.CharField(max_length=15, blank= True,null= True)
     email = models.EmailField(unique=True)
     avatar = CloudinaryField(null=True,blank= True)

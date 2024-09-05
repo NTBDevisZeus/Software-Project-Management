@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'restaurant.apps.RestaurantConfig'
+    'restaurant.apps.RestaurantConfig',
+    'rest_framework',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -74,6 +76,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'restaurantManagement.wsgi.application'
 AUTH_USER_MODEL = 'restaurant.User'
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -82,7 +90,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'qlqadb',
         "USER" : 'root',
-        'PASSWORD' : 'Abc@123',
+        'PASSWORD' : 'Admin@123',
         'HOST' : ''
     }
 }
