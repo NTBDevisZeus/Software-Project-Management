@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from restaurant.models import User, Feedback, Product, Table, Reservation, Order, OrderDetail, Payment
 
@@ -72,3 +73,24 @@ class ReservationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Bàn này đã được đặt cho ngày này.")
         return super().create(validated_data)
 
+## Thanh toán
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ['order', 'payment_method', 'payment_date', 'payment_status']
+
+## Quản lý sản phẩm
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'price', 'quantity', 'description', 'rate', 'pr_image']
+
+## Profile
+
+User = get_user_model()
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'phone_number', 'avatar']
+        read_only_fields = ['id', 'username', 'email']

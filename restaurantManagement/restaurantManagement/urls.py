@@ -18,7 +18,8 @@ from django.contrib import admin
 from django.urls import path
 from restaurant.views import CreateOrderView, StatisticsView, StatisticsByProductView, OrderListView, OrderDeleteView, \
     OrderDetailView, OrderCreateView, OrderUpdateView, ReservationCreateView, ReservationListView, \
-    ReservationDetailView, ReservationUpdateView, ReservationDeleteView
+    ReservationDetailView, ReservationUpdateView, ReservationDeleteView, PaymentListCreateView, PaymentDetailView, \
+    ProductListCreateView, ProductDetailView, UserProfileView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -61,4 +62,19 @@ urlpatterns = [
 
     # Xóa đặt bàn
     path('reservations/delete/<int:pk>/', ReservationDeleteView.as_view(), name='reservation-delete'),
+
+    # Tạo thanh toán
+    path('payments/', PaymentListCreateView.as_view(), name='payment-list-create'),
+
+    #Xem thanh toán
+    path('payments/<int:pk>/', PaymentDetailView.as_view(), name='payment-detail'),
+
+    # Tạo sản phẩm
+    path('products/', ProductListCreateView.as_view(), name='product-list-create'),
+
+    # Xem sản phẩm
+    path('products/<int:pk>/', ProductDetailView.as_view(), name='product-detail'),
+
+    # Profile
+    path('profile/', UserProfileView.as_view(), name='user-profile'),
 ]
