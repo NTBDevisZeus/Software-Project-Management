@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'cloudinary',
-    'drf_yasg'
+    'drf_yasg',
+    'djf_surveys'
 ]
 
 import cloudinary.uploader
