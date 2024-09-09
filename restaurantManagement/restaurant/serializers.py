@@ -87,10 +87,31 @@ class ProductSerializer(serializers.ModelSerializer):
 
 ## Profile
 
-User = get_user_model()
 
-class UserProfileSerializer(serializers.ModelSerializer):
+
+class UserSerializer(serializers.ModelSerializer):
+    # Chỉnh dữ liệu đối tượng User thành Json khi API trả về dữ liệu
+    def to_representation(self, instance):
+        req = super().to_representation(instance)
+        if instance.avatar:
+            req['avatar'] = instance.avatar.url
+        return req
+
+    #Mã hóa mk trước khi đưa vào cơ sở dữ liệu
+    def create(self, validated_data):
+        data = validated_data.copy()
+
+        user = User(**data)
+        user.set_password(user.password)
+        user.save()
+
+        return user
+
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'phone_number', 'avatar']
-        read_only_fields = ['id', 'username', 'email']
+        extra_kwargs = {
+            'password': {
+                'write_only': True
+            }
+        }

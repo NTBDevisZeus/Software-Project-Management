@@ -44,6 +44,14 @@ class Feedback(BaseModel):
     rate = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     fb_image = CloudinaryField(null=True)
 
+class Category(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -51,6 +59,7 @@ class Product(models.Model):
     description = models.TextField()
     rate = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     pr_image = CloudinaryField(null=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
 
     def __str__(self):
         return self.name

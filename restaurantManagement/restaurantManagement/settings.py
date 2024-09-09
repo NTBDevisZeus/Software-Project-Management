@@ -40,7 +40,21 @@ INSTALLED_APPS = [
     'restaurant.apps.RestaurantConfig',
     'rest_framework',
     'rest_framework_simplejwt',
+    'cloudinary',
+    'drf_yasg'
 ]
+
+import cloudinary.uploader
+
+
+# Configuration
+cloudinary.config(
+    cloud_name = "dvxmxdhbj",
+    api_key = "559284823772255",
+    api_secret = "AmuVLvn83xA4HHHqTasCT8OMeCM", # Click 'View API Keys' above to copy your API secret
+    secure=True
+)
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -90,7 +104,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'qlqadb',
         "USER" : 'root',
-        'PASSWORD' : 'Admin@123',
+        'PASSWORD' : 'Abc@123',
         'HOST' : ''
     }
 }

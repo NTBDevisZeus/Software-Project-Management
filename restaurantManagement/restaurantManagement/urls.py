@@ -1,33 +1,39 @@
-"""
-URL configuration for restaurantManagement project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, re_path, include
 from restaurant.views import CreateOrderView, StatisticsView, StatisticsByProductView, OrderListView, OrderDeleteView, \
     OrderDetailView, OrderCreateView, OrderUpdateView, ReservationCreateView, ReservationListView, \
     ReservationDetailView, ReservationUpdateView, ReservationDeleteView, PaymentListCreateView, PaymentDetailView, \
-    ProductListCreateView, ProductDetailView, UserProfileView
+    ProductListCreateView, ProductDetailView, UserViewSet
+
+from rest_framework.routers import DefaultRouter
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+# Khởi tạo router cho UserViewSet
+router = DefaultRouter()
+router.register(r'profile', UserViewSet, basename='user-profile')
+
+# Thiết lập Swagger
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Course API",
+        default_version='v1',
+        description="APIs for CourseApp",
+        contact=openapi.Contact(email="thanh.dh@ou.edu.vn"),
+        license=openapi.License(name="Dương Hữu Thành@2021"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    ## Đơn hàng
+    # Đơn hàng
     path('orders/', CreateOrderView.as_view(), name='create_order'),
 
-    ## Thống kê tổng
+    # Thống kê tổng
     path('statistics/', StatisticsView.as_view(), name='statistics'),
 
     # Thống kê sản phẩm
@@ -66,7 +72,7 @@ urlpatterns = [
     # Tạo thanh toán
     path('payments/', PaymentListCreateView.as_view(), name='payment-list-create'),
 
-    #Xem thanh toán
+    # Xem thanh toán
     path('payments/<int:pk>/', PaymentDetailView.as_view(), name='payment-detail'),
 
     # Tạo sản phẩm
@@ -75,6 +81,17 @@ urlpatterns = [
     # Xem sản phẩm
     path('products/<int:pk>/', ProductDetailView.as_view(), name='product-detail'),
 
-    # Profile
-    path('profile/', UserProfileView.as_view(), name='user-profile'),
+    # Thêm router URLs vào urlpatterns
+    path('', include(router.urls)),
+
+    # Swagger
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$',
+            schema_view.without_ui(cache_timeout=0),
+            name='schema-json'),
+    re_path(r'^swagger/$',
+            schema_view.with_ui('swagger', cache_timeout=0),
+            name='schema-swagger-ui'),
+    re_path(r'^redoc/$',
+            schema_view.with_ui('redoc', cache_timeout=0),
+            name='schema-redoc'),
 ]

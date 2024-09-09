@@ -1,7 +1,8 @@
 from django.contrib import admin
 
 from django.contrib import admin
-from .models import User, Product, Table, Order, OrderDetail, Reservation, Payment, Feedback
+from .models import User, Product, Table, Order, OrderDetail, Reservation, Payment, Feedback, Category
+
 
 # Đăng ký User model vào trang quản trị
 @admin.register(User)
@@ -55,6 +56,11 @@ class FeedbackAdmin(admin.ModelAdmin):
     list_display = ('user', 'content', 'rate')
     search_fields = ('user__username', 'content')
     list_filter = ('rate',)
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description')
+    search_fields = ('name',)
 
 
 # Register your models here.

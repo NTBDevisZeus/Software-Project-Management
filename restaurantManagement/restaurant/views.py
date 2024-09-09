@@ -1,12 +1,18 @@
+
 from django.db import transaction
-from rest_framework import generics, status
-from restaurant.models import Order, OrderDetail, Product, Reservation, Payment
-from restaurant.serializer import OrderSerializer, ReservationSerializer, PaymentSerializer, ProductSerializer, \
-    UserProfileSerializer
+from restaurant.models import *
+from rest_framework.parsers import MultiPartParser, JSONParser
+from restaurant.models import Order, OrderDetail, Product, Reservation, Payment,User
+from restaurant.serializers import OrderSerializer, ReservationSerializer, PaymentSerializer, ProductSerializer, \
+    UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Avg
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import viewsets, generics, status, parsers, permissions
+from rest_framework.decorators import action
+
+
 
 ## Đơn hàng
 class CreateOrderView(generics.CreateAPIView):
@@ -278,18 +284,24 @@ class ProductDetailView(APIView):
 
 ## Profile
 
-class UserProfileView(APIView):
-    permission_classes = [IsAuthenticated]
+class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
+    queryset = User.objects.filter(is_active=True)
+    serializer_class = UserSerializer
+    parser_classes = [MultiPartParser, JSONParser]
 
-    def get(self, request):
-        user = request.user
-        serializer = UserProfileSerializer(user)
-        return Response(serializer.data)
+    def get_permissions(self):
+        if self.action in ['current_user', 'change_password']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
 
-    def put(self, request):
+    @action(methods=['get', 'patch'], url_path='current-user', detail=False)
+    def current_user(self, request):
         user = request.user
-        serializer = UserProfileSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if request.method.__eq__('PATCH'):
+            for k, v in request.data.items():
+                setattr(user, k, v)  # user.k = v
+            user.save()
+        return Response(UserSerializer(request.user).data)
+
+
+
