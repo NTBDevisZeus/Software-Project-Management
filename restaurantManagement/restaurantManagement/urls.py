@@ -1,10 +1,8 @@
 from django.conf import settings
 from django.contrib import admin
 from django.urls import path, re_path, include
-from restaurant.views import CreateOrderView, StatisticsView, StatisticsByProductView, OrderListView, OrderDeleteView, \
-    OrderDetailView, OrderCreateView, OrderUpdateView, ReservationCreateView, ReservationListView, \
-    ReservationDetailView, ReservationUpdateView, ReservationDeleteView, PaymentListCreateView, PaymentDetailView, \
-    ProductListCreateView, ProductDetailView, UserViewSet
+from restaurant.views import CreateOrderView, StatisticsView, StatisticsByProductView, \
+    OrderDetailView, UserViewSet
 
 from rest_framework.routers import DefaultRouter
 from rest_framework import permissions
@@ -30,7 +28,7 @@ urlpatterns = [
     path('', include('restaurant.urls')),
     path('admin/', admin.site.urls),
     path('surveys/', include('djf_surveys.urls')),
-    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    # path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     re_path(r'^ckeditor/', include('ckeditor_uploader.urls')),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

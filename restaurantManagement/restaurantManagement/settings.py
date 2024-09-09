@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'cloudinary',
-    'drf_yasg'
+    'drf_yasg',
+    'djf_surveys'
 ]
 
 import cloudinary.uploader
@@ -104,7 +105,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'qlqadb',
         "USER" : 'root',
-        'PASSWORD' : 'Abc@123',
+        'PASSWORD' : 'Admin@123',
         'HOST' : ''
     }
 }

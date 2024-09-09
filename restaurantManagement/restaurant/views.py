@@ -1,18 +1,13 @@
-
 from django.db import transaction
-from restaurant.models import *
-from rest_framework.parsers import MultiPartParser, JSONParser
-from restaurant.models import Order, OrderDetail, Product, Reservation, Payment,User
-from restaurant.serializers import OrderSerializer, ReservationSerializer, PaymentSerializer, ProductSerializer, \
-    UserSerializer
+from restaurant.models import Order, OrderDetail, Product, Reservation, Payment, User
+from restaurant.serializers import OrderSerializer, ReservationSerializer, PaymentSerializer, ProductSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Avg
+from django.db.models import Sum, Avg
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import viewsets, generics, status, parsers, permissions
+from rest_framework import viewsets, generics, status, permissions
 from rest_framework.decorators import action
-
-
+from rest_framework.parsers import MultiPartParser, JSONParser
 
 ## Đơn hàng
 class CreateOrderView(generics.CreateAPIView):
@@ -20,7 +15,6 @@ class CreateOrderView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        # Đặt user là người đang đăng nhập
         serializer.save(user=self.request.user)
 
 ## Đơn hàng người dùng
@@ -44,26 +38,17 @@ class StatisticsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        # Tổng số đơn hàng
         total_orders = Order.objects.filter(user=request.user).count()
-
-        # Tổng doanh thu
         total_revenue = Order.objects.filter(user=request.user).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-
-        # Tổng số sản phẩm đã bán
         total_products_sold = OrderDetail.objects.filter(order__user=request.user).aggregate(Sum('quantity'))['quantity__sum'] or 0
-
-        # Giá trị đơn hàng trung bình
         average_order_value = Order.objects.filter(user=request.user).aggregate(Avg('total_amount'))['total_amount__avg'] or 0
 
-        # Trả về dữ liệu thống kê
         data = {
             "total_orders": total_orders,
             "total_revenue": total_revenue,
             "total_products_sold": total_products_sold,
             "average_order_value": average_order_value
         }
-
         return Response(data)
 
 ## Thống kê sản phẩm
@@ -71,220 +56,62 @@ class StatisticsByProductView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        # Thống kê doanh thu theo từng sản phẩm
         products_stats = Product.objects.annotate(
             total_quantity_sold=Sum('orderdetail__quantity'),
             total_revenue=Sum('orderdetail__unit_price')
         ).values('name', 'total_quantity_sold', 'total_revenue')
-
         return Response(products_stats)
 
-## DS đơn hàng
-class OrderListView(generics.ListAPIView):
-    serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        # Lấy danh sách đơn hàng của người dùng đã đăng nhập
-        return Order.objects.filter(user=self.request.user)
-
-##Chi tiết đơn hàng
-class OrderDetailView(generics.RetrieveAPIView):
+## Đơn hàng ViewSet
+class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Chỉ cho phép truy cập các đơn hàng của chính người dùng
         return Order.objects.filter(user=self.request.user)
 
-##Tạo đơn hàng
-class OrderCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    @action(methods=['get'], detail=False, url_path='recent-orders')
+    def recent_orders(self, request):
+        recent_orders = self.get_queryset().filter(date__gte='2024-01-01')
+        serializer = self.serializer_class(recent_orders, many=True)
+        return Response(serializer.data)
 
-    def post(self, request):
-        data = request.data
-        order_details_data = data.pop('order_details', [])
-
-        # Kiểm tra và tạo đơn hàng mới
-        try:
-            with transaction.atomic():
-                order = Order.objects.create(user=request.user, **data)
-                for detail in order_details_data:
-                    product = Product.objects.get(id=detail['product'])
-                    OrderDetail.objects.create(order=order, product=product, quantity=detail['quantity'], unit_price=product.price)
-
-                order_serializer = OrderSerializer(order)
-                return Response(order_serializer.data, status=status.HTTP_201_CREATED)
-        except Product.DoesNotExist:
-            return Response({"error": "Product not found"}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-## Cập nhật đơn
-class OrderUpdateView(generics.UpdateAPIView):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request, *args, **kwargs):
-        order = self.get_object()
-        if order.user != request.user:
-            return Response({"error": "You do not have permission to edit this order."}, status=status.HTTP_403_FORBIDDEN)
-
-        return super().patch(request, *args, **kwargs)
-
-## Xoá đơn
-class OrderDeleteView(generics.DestroyAPIView):
-    queryset = Order.objects.all()
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, *args, **kwargs):
-        order = self.get_object()
-        if order.user != request.user:
-            return Response({"error": "You do not have permission to delete this order."},
-                            status=status.HTTP_403_FORBIDDEN)
-
-        order.delete()
-        return Response({"message": "Order deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
-
-## Đặt bàn
-class ReservationCreateView(generics.CreateAPIView):
+## Đặt bàn ViewSet
+class ReservationViewSet(viewsets.ModelViewSet):
     serializer_class = ReservationSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Reservation.objects.filter(user=self.request.user)
+
+    @action(methods=['get'], detail=False, url_path='recent-reservations')
+    def recent_reservations(self, request):
+        recent_reservations = self.get_queryset().filter(date__gte='2024-01-01')
+        serializer = self.serializer_class(recent_reservations, many=True)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-## Danh sách bàn
-class ReservationListView(generics.ListAPIView):
-    serializer_class = ReservationSerializer
+## Thanh toán ViewSet
+class PaymentViewSet(viewsets.ModelViewSet):
+    queryset = Payment.objects.all()
+    serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Reservation.objects.filter(user=self.request.user)
+## Quản lý hàng ViewSet
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
 
-## Chi tiết bàn
-class ReservationDetailView(generics.RetrieveAPIView):
-    queryset = Reservation.objects.all()
-    serializer_class = ReservationSerializer
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action in ['update', 'destroy']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
 
-    def get_queryset(self):
-        return Reservation.objects.filter(user=self.request.user)
-
-## Cập nhật bàn
-class ReservationUpdateView(generics.UpdateAPIView):
-    queryset = Reservation.objects.all()
-    serializer_class = ReservationSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return Reservation.objects.filter(user=self.request.user)
-
-## Xoá bàn
-class ReservationDeleteView(generics.DestroyAPIView):
-    queryset = Reservation.objects.all()
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return Reservation.objects.filter(user=self.request.user)
-
-## Thanh toán
-class PaymentListCreateView(APIView):
-    def get(self, request):
-        payments = Payment.objects.all()
-        serializer = PaymentSerializer(payments, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = PaymentSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class PaymentDetailView(APIView):
-    def get(self, request, pk):
-        try:
-            payment = Payment.objects.get(pk=pk)
-        except Payment.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = PaymentSerializer(payment)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        try:
-            payment = Payment.objects.get(pk=pk)
-        except Payment.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = PaymentSerializer(payment, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        try:
-            payment = Payment.objects.get(pk=pk)
-        except Payment.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        payment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-## Quản lý hàng
-class ProductListCreateView(APIView):
-    def get(self, request):
-        products = Product.objects.all()
-        serializer = ProductSerializer(products, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = ProductSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ProductDetailView(APIView):
-    def get(self, request, pk):
-        try:
-            product = Product.objects.get(pk=pk)
-        except Product.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = ProductSerializer(product)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        try:
-            product = Product.objects.get(pk=pk)
-        except Product.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = ProductSerializer(product, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        try:
-            product = Product.objects.get(pk=pk)
-        except Product.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        product.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-## Profile
-
-class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
+## Profile ViewSet
+class UserViewSet(viewsets.ViewSet):
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
     parser_classes = [MultiPartParser, JSONParser]
@@ -297,11 +124,8 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     @action(methods=['get', 'patch'], url_path='current-user', detail=False)
     def current_user(self, request):
         user = request.user
-        if request.method.__eq__('PATCH'):
+        if request.method == 'PATCH':
             for k, v in request.data.items():
-                setattr(user, k, v)  # user.k = v
+                setattr(user, k, v)
             user.save()
         return Response(UserSerializer(request.user).data)
-
-
-
