@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-r9$8yk+n(cvj=vdu&#c_(@265=)p-0&e_tb98cef@w30dt7ecw
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# Chien thêm
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -42,7 +43,8 @@ INSTALLED_APPS = [
     'oauth2_provider',
     'cloudinary',
     'drf_yasg',
-    'djf_surveys'
+    'djf_surveys',
+    'corsheaders' #chien them
 ]
 
 import cloudinary.uploader
@@ -65,6 +67,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 import pymysql
@@ -105,7 +109,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'qlqadb',
         "USER" : 'root',
-        'PASSWORD' : 'Admin@123',
+        'PASSWORD' : 'Chien@2003',
         'HOST' : ''
     }
 }
@@ -157,5 +161,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CLIENT_SECRET = '1uh5kSJIkjLZLu2gGhfzT6YhaFCfkAAT7yzHUiK90ayJC6DZeuGIYCTR5ejSkdtxXbOFM5ie2kGaD7nhfqfjj7ITsURXC1rZvehSFL58U7IDbhqsTVzKDDYyktEooRsP'
 
 ## Tài
-CLIENT_ID = 'e0KH7qtWHY4WtxmtJ8sSmaBlUoY2MPMoJ7wLG0CX'
-CLIENT_SECRET = 'nf365P88cqx2wRszz2jMVQVkQJk1R2FA2m7X3pPZstB18S66ufZw91u8qcOx5VJJoNEvIcQj98pPATd6GsmnxtaOOpGFznfthI0pLX9v6KKj39OWcEo8y8y7CB5VdhVB'
+# CLIENT_ID = 'e0KH7qtWHY4WtxmtJ8sSmaBlUoY2MPMoJ7wLG0CX'
+# CLIENT_SECRET = 'nf365P88cqx2wRszz2jMVQVkQJk1R2FA2m7X3pPZstB18S66ufZw91u8qcOx5VJJoNEvIcQj98pPATd6GsmnxtaOOpGFznfthI0pLX9v6KKj39OWcEo8y8y7CB5VdhVB'
+
+# Chiêến
+CLIENT_ID = 'HxLMJrhwyV19DaOQ7AYNcZhu5YoEqWGFzikANw5N'
+CLIENT_SECRET = 'hdgFevbzsC0nbce7RkAEcMWOHEO7VmysHW5ox1D2qLVtpwfKnfdx0whSvAQuV8RlZ0mLoZBMWJgKFVz9uC68KgmloTM2cXHWqlySg17E2MFUjeq4lRGvTpYkczNE143T'
+
+CORS_ALLOW_ALL_ORIGINS = True
