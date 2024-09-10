@@ -1,22 +1,24 @@
-
 from django.db import transaction
 from restaurant.models import *
 from rest_framework.parsers import MultiPartParser, JSONParser
-from restaurant.models import Order, OrderDetail, Product, Reservation, Payment,User
 from restaurant.serializers import OrderSerializer, ReservationSerializer, PaymentSerializer, ProductSerializer, \
-    UserSerializer
+    UserSerializer, CategorySerializer, OrderDetailSerializer
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Avg
+
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import viewsets, generics, status, parsers, permissions
+
+from rest_framework import viewsets, generics, permissions
 from rest_framework.decorators import action
 
+class CategoryViewSet(viewsets.ModelViewSet, generics.CreateAPIView):
+    queryset =  Category.objects.all()
+    serializer_class = CategorySerializer
 
+    def get_permissions(self):
+        if self.action in ['update', 'destroy']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
 
-
-
-## Đơn hàng người dùng
 class UserOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
@@ -24,90 +26,74 @@ class UserOrderListView(generics.ListAPIView):
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
 
-## Chi tiết sản phẩm
-class OrderDetailView(generics.RetrieveAPIView):
-    serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
-
-## Thống kê tổng
-class StatisticsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        total_orders = Order.objects.filter(user=request.user).count()
-        total_revenue = Order.objects.filter(user=request.user).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-        total_products_sold = OrderDetail.objects.filter(order__user=request.user).aggregate(Sum('quantity'))['quantity__sum'] or 0
-        average_order_value = Order.objects.filter(user=request.user).aggregate(Avg('total_amount'))['total_amount__avg'] or 0
-
-        data = {
-            "total_orders": total_orders,
-            "total_revenue": total_revenue,
-            "total_products_sold": total_products_sold,
-            "average_order_value": average_order_value
-        }
-        return Response(data)
-
-## Thống kê sản phẩm
-class StatisticsByProductView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        products_stats = Product.objects.annotate(
-            total_quantity_sold=Sum('orderdetail__quantity'),
-            total_revenue=Sum('orderdetail__unit_price')
-        ).values('name', 'total_quantity_sold', 'total_revenue')
-        return Response(products_stats)
-
-## Đơn hàng ViewSet
+####### Update Order + OrderDetail
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        order = serializer.save()
+        order.update_status()  # Update status to 1 when the order is created
+
+# class OrderViewSet(viewsets.ModelViewSet):
+#     queryset = Order.objects.all()
+#     serializer_class = OrderSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#
+#     def create(self, request, *args, **kwargs):
+#         data = request.data.copy()
+#         order_details_data = data.pop('order_details', [])
+#
+#         serializer = self.get_serializer(data=data)
+#         serializer.is_valid(raise_exception=True)
+#         order = serializer.save()
+#
+#         total_amount = 0
+#         for detail_data in order_details_data:
+#             product = detail_data.get('product')
+#             quantity = detail_data.get('quantity')
+#             unit_price = detail_data.get('unit_price')
+#
+#             OrderDetail.objects.create(
+#                 order=order,
+#                 product=product,
+#                 quantity=quantity,
+#                 unit_price=unit_price
+#             )
+#             total_amount += quantity * unit_price
+#
+#         order.total_amount = total_amount
+#         order.save()
+#
+#         headers = self.get_success_headers(serializer.data)
+#         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+class OrderDetailViewSet(viewsets.ModelViewSet):
+    queryset = OrderDetail.objects.all()
+    serializer_class = OrderDetailSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
-
-    @action(methods=['get'], detail=False, url_path='recent-orders')
-    def recent_orders(self, request):
-        recent_orders = self.get_queryset().filter(date__gte='2024-01-01')
-        serializer = self.serializer_class(recent_orders, many=True)
-        return Response(serializer.data)
-
-    @action(methods=['post'], detail=False, url_path='create-order')
-    def create_order(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        # Thực hiện lưu đơn hàng với thông tin user từ request
-        serializer.save(user=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-## Đặt bàn ViewSet
 class ReservationViewSet(viewsets.ModelViewSet):
+    queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Reservation.objects.filter(user=self.request.user)
-
-    @action(methods=['get'], detail=False, url_path='recent-reservations')
-    def recent_reservations(self, request):
-        recent_reservations = self.get_queryset().filter(date__gte='2024-01-01')
-        serializer = self.serializer_class(recent_reservations, many=True)
-        return Response(serializer.data)
-
     def perform_create(self, serializer):
+        # Automatically set the user field to the currently authenticated user
         serializer.save(user=self.request.user)
 
-## Thanh toán ViewSet
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
 
-## Quản lý hàng ViewSet
+    def get_permissions(self):
+        if self.action in ['update', 'destroy']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -116,7 +102,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'destroy']:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
-
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = User.objects.filter(is_active=True)
@@ -131,11 +116,9 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     @action(methods=['get', 'patch'], url_path='current-user', detail=False)
     def current_user(self, request):
         user = request.user
-        if request.method.__eq__('PATCH'):
+        if request.method == 'PATCH':
             for k, v in request.data.items():
-                setattr(user, k, v)  # user.k = v
+                setattr(user, k, v)
             user.save()
         return Response(UserSerializer(request.user).data)
-
-
 

@@ -76,29 +76,43 @@ class Reservation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     table = models.ForeignKey(Table, on_delete=models.CASCADE)
     date = models.DateField()
-    status = models.IntegerField()
+    status = models.BooleanField(default=False)
 
     def __str__(self):
         return f'Reservation for {self.user} on {self.date}'
 
 
 class Order(models.Model):
-    user =models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField()
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.IntegerField()
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    status = models.BooleanField(default=False)
 
+    def save(self, *args, **kwargs):
+        if not self.pk:  # Only update total_amount if this is an existing Order
+            super(Order, self).save(*args, **kwargs)  # Save first to get a primary key
+        else:
+            self.total_amount = sum([detail.quantity * detail.product.price for detail in self.order_details.all()])
+            super(Order, self).save(*args, **kwargs)
+
+    def update_status(self):
+        self.status = 1  # Update status to 1 when the order is successfully created
+        self.save()
 
 class OrderDetail(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_details')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def save(self, *args, **kwargs):
+        # Call the parent save method
+        super(OrderDetail, self).save(*args, **kwargs)
+        # Recalculate the total_amount in the associated Order
+        self.order.save()
 
 class Payment(models.Model):
-
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     payment_method = models.IntegerField()
     payment_date = models.DateField()
-    payment_status = models.IntegerField()
+    payment_status = models.BooleanField(default=False)
 

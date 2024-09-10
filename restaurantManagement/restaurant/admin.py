@@ -35,7 +35,7 @@ class OrderAdmin(admin.ModelAdmin):
 # Đăng ký OrderDetail model
 @admin.register(OrderDetail)
 class OrderDetailAdmin(admin.ModelAdmin):
-    list_display = ('order', 'product', 'quantity', 'unit_price')
+    list_display = ('order', 'product', 'quantity')
     search_fields = ('order__id', 'product__name')
 
 # Đăng ký Reservation model
