@@ -1,21 +1,43 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import LoginForm from './components/Log/LoginForm';
-import Home from './components/Home';
-import RegisterForm from './components/Log/RegisterForm'; 
-import ProductList from './components/Product/ProductList';
 
-function App() {
+import { BrowserRouter, Routes ,Route} from 'react-router-dom';
+
+import Home from './components/Home';
+import RegisterForm from './components/Log/RegisterForm';
+import ProductList from './components/Product/ProductList';
+import MyUserReducer from './reducers/MyUserReducer';
+import cookie, { load } from "react-cookies";
+import Footer from './layout/Footer';
+import Header from './layout/Header';
+import { createContext, useReducer } from "react";
+import { Container } from 'react-bootstrap';
+import Login from './components/Login';
+
+export const MyUserContext = createContext();
+export const MyDispatchContext = createContext();
+const App = () => {
+
+  const [user, dispatch] = useReducer(MyUserReducer, load("user") || null);
+  
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LoginForm />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/register" element={<RegisterForm />} /> 
-        <Route path="/products" element={<ProductList />} />
-        
-      </Routes>
-    </Router>
+
+    <BrowserRouter>
+      <MyUserContext.Provider value={user}>
+        <MyDispatchContext.Provider value={dispatch} >
+          <Header />
+
+          <Container>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/register" element={<RegisterForm />} />
+            <Route path="/products" element={<ProductList />} />
+
+          </Routes>
+          </Container>
+          <Footer />
+        </MyDispatchContext.Provider>
+      </MyUserContext.Provider>
+    </BrowserRouter>
   );
 }
 

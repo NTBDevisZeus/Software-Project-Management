@@ -109,7 +109,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'qlqadb',
         "USER" : 'root',
-        'PASSWORD' : 'Chien@2003',
+        'PASSWORD' : 'Abc@123',
         'HOST' : ''
     }
 }
@@ -157,15 +157,15 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ## Bình
-# CLIENT_ID = 'X0krpG85JYNi3nnLzunU7699TRChJqhoU5phvqQ6'
-# CLIENT_SECRET = '1uh5kSJIkjLZLu2gGhfzT6YhaFCfkAAT7yzHUiK90ayJC6DZeuGIYCTR5ejSkdtxXbOFM5ie2kGaD7nhfqfjj7ITsURXC1rZvehSFL58U7IDbhqsTVzKDDYyktEooRsP'
+CLIENT_ID = 'X0krpG85JYNi3nnLzunU7699TRChJqhoU5phvqQ6'
+CLIENT_SECRET = '1uh5kSJIkjLZLu2gGhfzT6YhaFCfkAAT7yzHUiK90ayJC6DZeuGIYCTR5ejSkdtxXbOFM5ie2kGaD7nhfqfjj7ITsURXC1rZvehSFL58U7IDbhqsTVzKDDYyktEooRsP'
 
 ## Tài
 # CLIENT_ID = 'e0KH7qtWHY4WtxmtJ8sSmaBlUoY2MPMoJ7wLG0CX'
 # CLIENT_SECRET = 'nf365P88cqx2wRszz2jMVQVkQJk1R2FA2m7X3pPZstB18S66ufZw91u8qcOx5VJJoNEvIcQj98pPATd6GsmnxtaOOpGFznfthI0pLX9v6KKj39OWcEo8y8y7CB5VdhVB'
 
 # Chiêến
-CLIENT_ID = 'HxLMJrhwyV19DaOQ7AYNcZhu5YoEqWGFzikANw5N'
-CLIENT_SECRET = 'hdgFevbzsC0nbce7RkAEcMWOHEO7VmysHW5ox1D2qLVtpwfKnfdx0whSvAQuV8RlZ0mLoZBMWJgKFVz9uC68KgmloTM2cXHWqlySg17E2MFUjeq4lRGvTpYkczNE143T'
+# CLIENT_ID = 'HxLMJrhwyV19DaOQ7AYNcZhu5YoEqWGFzikANw5N'
+# CLIENT_SECRET = 'hdgFevbzsC0nbce7RkAEcMWOHEO7VmysHW5ox1D2qLVtpwfKnfdx0whSvAQuV8RlZ0mLoZBMWJgKFVz9uC68KgmloTM2cXHWqlySg17E2MFUjeq4lRGvTpYkczNE143T'
 
 CORS_ALLOW_ALL_ORIGINS = True
