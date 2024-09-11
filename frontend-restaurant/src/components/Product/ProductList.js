@@ -26,7 +26,7 @@ const ProductList = () => {
         {products.map(product => (
           <div key={product.id} className="product-card">
             <img
-              src={`http://res.cloudinary.com/your-cloud-name/${product.pr_image}`}
+              src={`http://res.cloudinary.com/dvxmxdhbj/${product.pr_image}`}
               alt={product.name}
               className="product-image"
             />

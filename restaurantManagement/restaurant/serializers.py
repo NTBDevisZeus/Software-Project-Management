@@ -3,6 +3,7 @@ from rest_framework import serializers
 from restaurant.models import User, Feedback, Product, Table, Reservation, Order, OrderDetail, Payment, Category
 
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
     def to_representation(self, instance):
         req = super().to_representation(instance)
         if instance.avatar:
@@ -11,14 +12,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         data = validated_data.copy()
+        password = data.pop('password', None)
         user = User(**data)
-        user.set_password(user.password)
+        if password:
+            user.set_password(password)
         user.save()
         return user
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'phone_number', 'avatar']
+        fields = ['id', 'username', 'password',  'first_name', 'last_name', 'email', 'phone_number', 'avatar']
         extra_kwargs = {
             'password': {
                 'write_only': True
