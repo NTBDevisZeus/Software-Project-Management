@@ -11,7 +11,7 @@ import Header from './layout/Header';
 import { createContext, useReducer } from "react";
 import { Container } from 'react-bootstrap';
 import Login from './components/Login';
-
+import 'bootstrap/dist/css/bootstrap.min.css';
 export const MyUserContext = createContext();
 export const MyDispatchContext = createContext();
 const App = () => {

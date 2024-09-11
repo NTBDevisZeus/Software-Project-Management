@@ -1,30 +1,25 @@
-import  { useContext, useEffect, useState } from "react";
-import {
-     Button, Container, Form, Image, Nav, Navbar, NavDropdown } from "react-bootstrap";
-
-import { Link} from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import { Button, Container, Form, Image, Nav, Navbar, NavDropdown } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router";
-import "./Header.css"; // Thêm file CSS
 import APIs, { endpoints } from "../configs/APIs";
-import { MyUserContext, MyDispatchContext } from "../App";
+import { MyDispatchContext, MyUserContext } from "../App";
 
 const Header = () => {
     const user = useContext(MyUserContext);
-    
     const dispatch = useContext(MyDispatchContext);
+    
+    const [categories, setCategories] = useState([]);
     const [q, setQ] = useState("");
-    const [products, setProducts] = useState([]);
     const nav = useNavigate();
-    const loadPros = async () => {
-        let res = await APIs.get(endpoints['products']);
-        setProducts(res.data);
+
+    const loadCates = async () => {
+        let res = await APIs.get(endpoints['category']);
+        setCategories(res.data);
     }
 
     useEffect(() => {
-        loadPros();
-
-
-
+        loadCates();
     }, []);
 
     const search = (e) => {
@@ -32,9 +27,8 @@ const Header = () => {
         nav(`/?kw=${q}`);
     }
 
-
-
     return (<>
+       
         <Navbar expand="lg" className="bg-body-tertiary">
             <Container>
                 <Navbar.Brand href="#home">E-commerce Website</Navbar.Brand>
@@ -45,8 +39,8 @@ const Header = () => {
                     <Link to="/" className="nav-link">Trang chủ</Link>
                 
                     <NavDropdown title="Danh mục" id="basic-nav-dropdown">
-                        {products.map(c => {
-                            const url = `/?proId=${c.id}`
+                        {categories.map(c => {
+                            const url = `/?cateId=${c.id}`
                             return <Link className="dropdown-item" key={c.id} to={url}>{c.name}</Link>;
                         })}
                     </NavDropdown>
@@ -60,7 +54,7 @@ const Header = () => {
                             Chào {user.username}!</Link>
                         <Button className="btn btn-danger" onClick={() => dispatch({"type": "logout"})}>Đăng xuất</Button>
                     </>}
-                  
+                    
                     
                     
                 </Nav>
@@ -82,5 +76,3 @@ const Header = () => {
 }
 
 export default Header;
-
-

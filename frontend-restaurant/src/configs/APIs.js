@@ -3,7 +3,7 @@ import cookie from "react-cookies";
 const BASE_URL = "http://127.0.0.1:8000/";
 
 export const endpoints = {
-    "categories" : "/categories",
+    "category" : "/category",
     "products": "/products",
     "login": "/o/token/",
     "currentUser": "/users/current-user/", 
