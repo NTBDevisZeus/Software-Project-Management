@@ -1,23 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './ProductList.css'; 
+import './ProductList.css';
+import { BASE_URL, endpoints } from '../../configs/APIs';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
-
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const location = useLocation();  // Lấy thông tin URL để lấy từ khóa tìm kiếm
+  const navigate = useNavigate();
   useEffect(() => {
     // Gọi API để lấy danh sách món ăn
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/products/');
+        const response = await axios.get(`${BASE_URL}${endpoints['products']}`);
         setProducts(response.data);
+
+        const queryParams = new URLSearchParams(location.search);
+        const searchTerm = queryParams.get('kw');
+
+        if (searchTerm) {
+
+          const filtered = response.data.filter(product =>
+            product.name.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+          setFilteredProducts(filtered);
+        } else {
+          setFilteredProducts(response.data);
+        }
       } catch (error) {
         console.error('Error fetching products:', error);
       }
     };
 
     fetchProducts();
-  }, []);
+  }, [location.search]);
 
   return (
     <div className="product-list-container">

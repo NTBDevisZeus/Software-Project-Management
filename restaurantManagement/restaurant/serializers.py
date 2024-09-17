@@ -21,7 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password',  'first_name', 'last_name', 'email', 'phone_number', 'avatar']
+        fields = ['id', 'username', 'password',  'first_name', 'last_name', 'email', 'phone_number', 'avatar','role']
         extra_kwargs = {
             'password': {
                 'write_only': True
@@ -128,3 +128,14 @@ class ProductSerializer(serializers.ModelSerializer):
         category = Category.objects.get(id=category_id)
         product = Product.objects.create(category=category, **validated_data)
         return product
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    order_id = serializers.IntegerField()
+    class Meta:
+        model = Feedback
+        fields = ['id', 'user', 'content', 'rate', 'fb_image','order_id']
+        extra_kwargs = {
+            'user': {'read_only': True}  # Tự động thiết lập user từ người dùng hiện tại
+        }
+

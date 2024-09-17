@@ -1,8 +1,12 @@
 from django.contrib import admin
 
 from django.contrib import admin
+from django.db.models import Count
+from django.db.models.functions import ExtractYear, ExtractMonth, ExtractQuarter
+from django.template.response import TemplateResponse
+from django.urls import path
 from .models import User, Product, Table, Order, OrderDetail, Reservation, Payment, Feedback, Category
-
+from django.db.models import Sum
 
 # Đăng ký User model vào trang quản trị
 @admin.register(User)
@@ -62,5 +66,80 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'description')
     search_fields = ('name',)
 
+class RestaurantAppAdminSite(admin.AdminSite):
+    site_header = "Thống kê quán ăn"
+    index_template = 'admin/index.html'
 
+    def get_urls(self):
+        return [
+            path('orderstats/', self.orderstats_view),
+            path('revenuestats/', self.revenue_view),  # Thêm URL cho thống kê doanh thu
+        ] + super().get_urls()
+
+    def orderstats_view(self, request):
+        total_orders = Order.objects.count()
+
+        # Lấy tùy chọn xem thống kê và năm đã chọn từ request
+        view_option = request.GET.get('view', 'year')
+        selected_year = request.GET.get('year')
+
+        # Lấy danh sách các năm có đơn hàng
+        years = Order.objects.annotate(year=ExtractYear('date')).values_list('year', flat=True).distinct().order_by(
+            'year')
+
+        # Thực hiện thống kê dựa trên tùy chọn và năm đã chọn
+        if view_option == 'month' and selected_year:
+            stats = Order.objects.filter(date__year=selected_year).annotate(month=ExtractMonth('date')).values(
+                'month').annotate(count=Count('id')).order_by('month')
+        elif view_option == 'quarter' and selected_year:
+            stats = Order.objects.filter(date__year=selected_year).annotate(quarter=ExtractQuarter('date')).values(
+                'quarter').annotate(count=Count('id')).order_by('quarter')
+        else:
+            stats = Order.objects.annotate(year=ExtractYear('date')).values('year').annotate(
+                count=Count('id')).order_by('year')
+
+        # Trả về template với dữ liệu thống kê
+        return TemplateResponse(request, 'admin/orderstats.html', {
+            "total_orders": total_orders,
+            "view_option": view_option,
+            "selected_year": selected_year,
+            "years": years,
+            "stats": stats,
+        })
+
+    def revenue_view(self, request):
+        total_revenue = Order.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+        view_option = request.GET.get('view', 'year')
+        selected_year = request.GET.get('year')
+
+        years = Order.objects.annotate(year=ExtractYear('date')).values_list('year', flat=True).distinct().order_by(
+            'year')
+
+        if view_option == 'month' and selected_year:
+            stats = Order.objects.filter(date__year=selected_year).annotate(month=ExtractMonth('date')).values(
+                'month').annotate(total_revenue=Sum('total_amount')).order_by('month')
+        elif view_option == 'quarter' and selected_year:
+            stats = Order.objects.filter(date__year=selected_year).annotate(quarter=ExtractQuarter('date')).values(
+                'quarter').annotate(total_revenue=Sum('total_amount')).order_by('quarter')
+        else:
+            stats = Order.objects.annotate(year=ExtractYear('date')).values('year').annotate(
+                total_revenue=Sum('total_amount')).order_by('year')
+
+        return TemplateResponse(request, 'admin/revenuestats.html', {
+            "total_revenue": total_revenue,
+            "view_option": view_option,
+            "selected_year": selected_year,
+            "years": years,
+            "stats": stats,
+        })
+
+
+admin_site = RestaurantAppAdminSite('myrestaurant')
 # Register your models here.
+admin_site.register(User,UserAdmin)
+admin_site.register(Category,CategoryAdmin)
+admin_site.register(Product,ProductAdmin)
+admin_site.register(Table,TableAdmin)
+admin_site.register(Reservation,ReservationAdmin)
+admin_site.register(Payment,PaymentAdmin)
+admin_site.register(Feedback,FeedbackAdmin)

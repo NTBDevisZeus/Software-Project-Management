@@ -1,0 +1,57 @@
+/* Style for the product card */
+.product-card {
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+  }
+  
+  .product-card:hover {
+    transform: scale(1.02);
+  }
+  
+  /* Style for the button group to align buttons and add space */
+  .button-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+  }
+  
+  /* Custom styles for the buttons */
+  .btn-add-cart {
+    flex: 1;
+    margin-right: 10px;
+    background-color: #007bff;
+    border: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  .btn-add-cart:hover {
+    background-color: #0056b3;
+  }
+  
+  .btn-view-detail {
+    flex: 1;
+    color: #007bff;
+    border-color: #007bff;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  .btn-view-detail:hover {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  /* Ensuring a consistent button height and padding */
+  .button-group .btn {
+    height: 40px;
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+  
+  /* Card Image Styling */
+  .product-card img {
+    border-radius: 10px 10px 0 0;
+    height: 200px;
+    object-fit: cover;
+  }

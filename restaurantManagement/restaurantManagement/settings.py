@@ -71,15 +71,18 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
 ]
 
+APPEND_SLASH = False
+
 import pymysql
 pymysql.install_as_MySQLdb()
 
 ROOT_URLCONF = 'restaurantManagement.urls'
 
+import os
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

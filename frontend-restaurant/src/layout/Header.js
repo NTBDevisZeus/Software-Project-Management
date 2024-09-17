@@ -1,13 +1,14 @@
 import { useContext, useEffect, useState } from "react";
-import { Button, Container, Form, Image, Nav, Navbar, NavDropdown } from "react-bootstrap";
+import { Badge, Button, Container, Form, Image, Nav, Navbar, NavDropdown } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router";
 import APIs, { endpoints } from "../configs/APIs";
-import { MyDispatchContext, MyUserContext } from "../App";
+import { MyDispatchContext, MyUserContext ,MyCartContext } from "../App";
 
 const Header = () => {
     const user = useContext(MyUserContext);
     const dispatch = useContext(MyDispatchContext);
+    const [cartCounter,] = useContext(MyCartContext);
     
     const [categories, setCategories] = useState([]);
     const [q, setQ] = useState("");
@@ -24,14 +25,16 @@ const Header = () => {
 
     const search = (e) => {
         e.preventDefault();
-        nav(`/?kw=${q}`);
+        nav(`/products/?kw=${q}`);
+
     }
+    console.log(user)
 
     return (<>
-       
+        
         <Navbar expand="lg" className="bg-body-tertiary">
             <Container>
-                <Navbar.Brand href="#home">E-commerce Website</Navbar.Brand>
+                <Navbar.Brand as={Link} to="/">Restaurant</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="me-auto">
@@ -45,16 +48,23 @@ const Header = () => {
                         })}
                     </NavDropdown>
 
-                    {user===null?<>
+                    {user===null ?<>
+                       
+
                         <Link to="/login" className="nav-link text-danger">Đăng nhập</Link>
                         <Link to="/register" className="nav-link text-primary">Đăng ký</Link>
+                        
                     </>:<>
-                        <Link to="/" className="nav-link text-danger">
+                        <Link to="/profile" className="nav-link text-danger">
                             <Image width={40} src={user.avatar} roundedCircle />
+                            
                             Chào {user.username}!</Link>
                         <Button className="btn btn-danger" onClick={() => dispatch({"type": "logout"})}>Đăng xuất</Button>
                     </>}
-                    
+                    <Link to="/feedback" className="nav-link text-danger">feedback</Link>
+                    <Link to="/booking" className="nav-link text-primary">Đặt Bàn</Link>
+                    <Link to="/cart" className="nav-link text-danger">&#128722;<Badge className="bg-danger">{cartCounter}</Badge></Link>
+                   
                     
                     
                 </Nav>

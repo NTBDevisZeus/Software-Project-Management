@@ -30,7 +30,7 @@ const Login = () => {
             cookie.save("token", res.data.access_token);
 
             // Fetch the current user after login using the token
-            let userRes = await authAPIs().get(endpoints['current-user']);
+            let userRes = await authAPIs().get(endpoints['currentUser']);
             console.info(userRes.data);
 
             // Save user data in cookies
@@ -43,7 +43,7 @@ const Login = () => {
             });
 
             // Redirect to home after successful login
-            navigate("/home");
+            navigate("/");
 
         } catch (err) {
             console.error(err);
@@ -53,7 +53,7 @@ const Login = () => {
 
     // If the user is already logged in, redirect to the homepage
     if (user !== null)
-        return <Navigate to="/home" />
+        return <Navigate to="/" />
 
     return (
         <>

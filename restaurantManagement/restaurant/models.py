@@ -39,11 +39,7 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class Feedback(BaseModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    rate = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-    fb_image = CloudinaryField(null=True)
+
 
 class Category(models.Model):
     name = models.CharField(max_length=255)
@@ -117,3 +113,9 @@ class Payment(models.Model):
     payment_date = models.DateField()
     payment_status = models.BooleanField(default=False)
 
+class Feedback(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    rate = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    fb_image = CloudinaryField(null=True)
+    order = models.ForeignKey(Order,on_delete=models.CASCADE)

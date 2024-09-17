@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios from 'axios'; 
 import { useNavigate } from 'react-router-dom';
-import './Register.css'
+import { BASE_URL, endpoints } from '../../configs/APIs'; 
+import './Register.css';
 
 const RegisterForm = () => {
   const [username, setUsername] = useState('');
@@ -40,12 +41,12 @@ const RegisterForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (password !== confirmPassword) {
       setPasswordError('Mật khẩu xác nhận không khớp');
       return;
     }
-
+  
     const formData = new FormData();
     formData.append('username', username);
     formData.append('first_name', firstName);
@@ -56,17 +57,21 @@ const RegisterForm = () => {
     if (avatar) {
       formData.append('avatar', avatar); 
     }
-
+  
     try {
-      const response = await axios.post('http://127.0.0.1:8000/users/', formData, {
+      const response = await axios.post(`${BASE_URL}${endpoints['register']}`, formData, {
+        
         headers: {
           'Content-Type': 'multipart/form-data', 
         },
       });
-
+      console.log(response)
+  
       if (response.status === 201) {
         setMessage('Đăng ký thành công!');
-        navigate('/'); 
+        setTimeout(() => {
+          navigate('/login'); 
+        }, 2000);
       }
     } catch (error) {
       if (error.response) {
@@ -78,6 +83,7 @@ const RegisterForm = () => {
       }
     }
   };
+  
 
   return (
     <div className="register-container">
@@ -125,7 +131,7 @@ const RegisterForm = () => {
           value={confirmPassword}
           onChange={handleConfirmPasswordChange} 
         />
-        {passwordError && <p className="error-message">{passwordError}</p>} {/* Thông báo lỗi màu đỏ */}
+        {passwordError && <p className="error-message">{passwordError}</p>} 
         <input
           type="file"
           accept="image/*"
@@ -134,7 +140,11 @@ const RegisterForm = () => {
         <button type="submit" className="register-button">Register</button>
       </form>
 
-      {message && <p className="register-message">{message}</p>}
+      {message && (
+      <p className={message.includes('thành công') ? 'success-message' : 'error-message'}>
+        {message}
+      </p>
+    )}
     </div>
   );
 };

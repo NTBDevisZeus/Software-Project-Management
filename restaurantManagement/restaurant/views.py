@@ -2,12 +2,12 @@ from django.db import transaction
 from restaurant.models import *
 from rest_framework.parsers import MultiPartParser, JSONParser
 from restaurant.serializers import OrderSerializer, ReservationSerializer, PaymentSerializer, ProductSerializer, \
-    UserSerializer, CategorySerializer, OrderDetailSerializer
+    UserSerializer, CategorySerializer, OrderDetailSerializer, FeedbackSerializer, TableSerializer
 from rest_framework.permissions import IsAuthenticated
-
+from django.db.models import Q
 from rest_framework.response import Response
 
-from rest_framework import viewsets, generics, permissions
+from rest_framework import viewsets, generics, permissions,status
 from rest_framework.decorators import action
 
 class CategoryViewSet(viewsets.ModelViewSet, generics.CreateAPIView):
@@ -37,38 +37,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = serializer.save()
         order.update_status()  # Update status to 1 when the order is created
 
-# class OrderViewSet(viewsets.ModelViewSet):
-#     queryset = Order.objects.all()
-#     serializer_class = OrderSerializer
-#     permission_classes = [permissions.IsAuthenticated]
-#
-#     def create(self, request, *args, **kwargs):
-#         data = request.data.copy()
-#         order_details_data = data.pop('order_details', [])
-#
-#         serializer = self.get_serializer(data=data)
-#         serializer.is_valid(raise_exception=True)
-#         order = serializer.save()
-#
-#         total_amount = 0
-#         for detail_data in order_details_data:
-#             product = detail_data.get('product')
-#             quantity = detail_data.get('quantity')
-#             unit_price = detail_data.get('unit_price')
-#
-#             OrderDetail.objects.create(
-#                 order=order,
-#                 product=product,
-#                 quantity=quantity,
-#                 unit_price=unit_price
-#             )
-#             total_amount += quantity * unit_price
-#
-#         order.total_amount = total_amount
-#         order.save()
-#
-#         headers = self.get_success_headers(serializer.data)
-#         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 class OrderDetailViewSet(viewsets.ModelViewSet):
     queryset = OrderDetail.objects.all()
@@ -103,8 +71,26 @@ class ProductViewSet(viewsets.ModelViewSet):
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
+    @action(detail=False, methods=['get'], url_path='cate/(?P<category_id>[^/.]+)')
+    def products_by_category(self, request, category_id=None):
+        # Lọc danh sách sản phẩm theo category_id
+        products = Product.objects.filter(category__id=category_id)
+        if not products.exists():
+            return Response({"detail": "No products found for this category."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+
+    # Tìm kiếm theo tên sản phẩm (case-insensitive)
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search_query = self.request.query_params.get('q', None)
+        if search_query:
+            queryset = queryset.filter(Q(name__icontains=search_query))
+
+        return queryset
+
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
-    queryset = User.objects.filter(is_active=True)
+    queryset = User.objects.all()
     serializer_class = UserSerializer
     parser_classes = [MultiPartParser, JSONParser]
 
@@ -121,4 +107,27 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
                 setattr(user, k, v)
             user.save()
         return Response(UserSerializer(request.user).data)
+
+class TableViewSet (viewsets.ModelViewSet):
+    queryset = Table.objects.all()
+    serializer_class = TableSerializer
+    # permission_classes = [IsAuthenticated]
+
+
+class FeedbackViewSet(viewsets.ModelViewSet):
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # Tự động thiết lập trường user bằng người dùng hiện tại
+        serializer.save(user=self.request.user)
+
+    # Tùy chọn: Thêm hành động riêng nếu cần
+    @action(detail=False, methods=['get'])
+    def my_feedbacks(self, request):
+        feedbacks = Feedback.objects.all()
+        serializer = self.get_serializer(feedbacks, many=True)
+        return Response(serializer.data)
+
 
