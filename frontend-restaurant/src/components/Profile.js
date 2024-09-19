@@ -1,12 +1,13 @@
 import React, { useState, useContext } from 'react';
 import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
-import { MyUserContext } from '../App';
+import { MyDispatchContext, MyUserContext } from '../App';
 import { authAPIs, endpoints } from '../configs/APIs'; // Giả sử bạn có sẵn API để cập nhật
 
 const DEFAULT_IMAGE = "https://via.placeholder.com/100"; // Đường dẫn hình ảnh mặc định
 
 const Profile = () => {
   const user = useContext(MyUserContext);
+  const dispatch = useContext(MyDispatchContext);
   const avatarSrc = user.avatar || DEFAULT_IMAGE;
 
   const [isEditing, setIsEditing] = useState(false);
@@ -15,9 +16,16 @@ const Profile = () => {
     last_name: user.last_name,
     email: user.email,
     phone_number: user.phone_number,
-    avatar: user.avatar,
-
+    avatar: null, // Avatar mới sẽ được lưu ở đây nếu có thay đổi
   });
+
+  // Xử lý ảnh được chọn
+  const handleImageChange = (e) => {
+    setUpdatedUser({
+      ...updatedUser,
+      avatar: e.target.files[0] // Lấy file ảnh từ input
+    });
+  };
 
   // Hàm xử lý sự thay đổi thông tin người dùng
   const handleChange = (e) => {
@@ -30,10 +38,29 @@ const Profile = () => {
   // Hàm để gửi thông tin cập nhật
   const handleSave = async () => {
     try {
+      const formData = new FormData();
+      formData.append('first_name', updatedUser.first_name);
+      formData.append('last_name', updatedUser.last_name);
+      formData.append('email', updatedUser.email);
+      formData.append('phone_number', updatedUser.phone_number);
+
+      // Nếu người dùng thay đổi ảnh thì thêm vào formData
+      if (updatedUser.avatar) {
+        formData.append('avatar', updatedUser.avatar);
+      }
+
       // Gọi API để cập nhật thông tin
-      await authAPIs().patch(endpoints['currentUser'], updatedUser);
-      // Sau khi cập nhật thành công, thoát khỏi chế độ chỉnh sửa
-      setIsEditing(false);
+      const res = await authAPIs().patch(endpoints['currentUser'], formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      // Cập nhật ngữ cảnh người dùng sau khi cập nhật thành công
+      dispatch({
+        type: 'UPDATE_USER',
+        payload: res.data, // Cập nhật thông tin người dùng trong ngữ cảnh
+      });
+
+      setIsEditing(false); // Thoát khỏi chế độ chỉnh sửa
     } catch (err) {
       console.error('Lỗi khi cập nhật thông tin:', err);
     }
@@ -51,6 +78,15 @@ const Profile = () => {
               alt="Avatar"
               style={{ height: 'auto' }}
             />
+            {isEditing && (
+              <Form.Group className="mt-3">
+                <Form.Control
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </Form.Group>
+            )}
           </Card>
         </Col>
         <Col md={8} className="profile-card">

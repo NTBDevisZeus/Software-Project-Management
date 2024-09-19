@@ -1,11 +1,20 @@
 import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-
+import backgroundImage from '../components/images/background.jpg'; 
 
 const Footer = () => {
   return (
-    <footer className="bg-dark text-white py-4">
+    <footer
+    style={{
+
+      backgroundImage: `url(${backgroundImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    }}
+    
+    
+    className="bg-dark text-white py-4" >
       <Container>
         <Row>
           <Col md={3}>

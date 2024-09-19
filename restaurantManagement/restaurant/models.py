@@ -109,13 +109,23 @@ class OrderDetail(models.Model):
 
 class Payment(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    payment_method = models.IntegerField()
-    payment_date = models.DateField()
-    payment_status = models.BooleanField(default=False)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    method = models.CharField(max_length=100)  # MoMo, ATM, etc.
+    status = models.CharField(max_length=50,  default='Pending')  # 'Pending', 'Failed', 'Successful'
+    transaction_id = models.CharField(max_length=255, null=True, blank=True)
+
+    def update_status_from_momo(self, result_code, trans_id):
+        if result_code == 0:
+            self.status = 'Successful'
+        else:
+            self.status = 'Failed'
+        self.transaction_id = trans_id
+        self.save()
+
 
 class Feedback(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     rate = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-    fb_image = CloudinaryField(null=True)
-    order = models.ForeignKey(Order,on_delete=models.CASCADE)
+    fb_image = CloudinaryField( blank=True, null=True)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)

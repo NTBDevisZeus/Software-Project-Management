@@ -3,15 +3,19 @@ import cookie from "react-cookies";
 export const BASE_URL = "http://127.0.0.1:8000/";
 
 export const endpoints = {
-    "category" : "/category",
-    "products": "/products",
+    "category" : "/category/",
+    "products": "/products/",
     "login": "/o/token/",
     "currentUser": "/users/current-user/", 
     "register": "/users/",
     "productcate":"/products/cate/${categoryId}/",
     "booking" : "/reservations/",
     "feedback" : "/feedbacks/",
-    "table" : "/tables/"
+    "table" : "/tables/",
+    "pay": "/pay/",
+    "order":"/orders/",
+    "paymentVNpay": "/payments/",
+    "vnpay" : "/vnpay/"
 
 }
 

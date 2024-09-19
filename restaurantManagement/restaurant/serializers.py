@@ -37,13 +37,11 @@ class CategorySerializer(serializers.ModelSerializer):
 class OrderDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderDetail
-        fields = ['id', 'product', 'quantity', 'unit_price']
-
-
-class OrderDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrderDetail
         fields = ['id', 'product', 'quantity']
+        search_fields = ('order__id', 'product__name')
+
+
+
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -52,7 +50,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'user', 'date', 'total_amount', 'status', 'order_details']
-        read_only_fields = ['total_amount', 'status']
+        read_only_fields = ['total_amount']
 
     def create(self, validated_data):
         order_details_data = validated_data.pop('order_details', [])
@@ -113,11 +111,11 @@ class ReservationSerializer(serializers.ModelSerializer):
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
-        fields = ['order', 'payment_method', 'payment_date', 'payment_status']
+        fields = '__all__'
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    category_id = serializers.IntegerField(write_only=True)  # Only for input
+    category_id = serializers.IntegerField()  # Only for input
 
     class Meta:
         model = Product
@@ -132,10 +130,20 @@ class ProductSerializer(serializers.ModelSerializer):
 class FeedbackSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     order_id = serializers.IntegerField()
+    fb_image = serializers.SerializerMethodField()
     class Meta:
         model = Feedback
-        fields = ['id', 'user', 'content', 'rate', 'fb_image','order_id']
+        fields = ['id', 'user', 'content', 'rate', 'fb_image', 'order_id']
         extra_kwargs = {
             'user': {'read_only': True}  # Tự động thiết lập user từ người dùng hiện tại
         }
 
+    def get_fb_image(self, obj):
+        if obj.fb_image:
+            return obj.fb_image.url
+        return None
+
+    def create(self, validated_data):
+        image = self.context['request'].FILES.get('fb_image')
+        feedback = Feedback.objects.create(fb_image=image, **validated_data)
+        return feedback

@@ -51,7 +51,7 @@ class ReservationAdmin(admin.ModelAdmin):
 # Đăng ký Payment model
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('order', 'payment_method', 'payment_date', 'payment_status')
+    list_display = ('order', 'method', 'amount', 'status')  # Đổi 'date' thành 'payment_date'
     search_fields = ('order__id',)
 
 # Đăng ký Feedback model
@@ -67,7 +67,7 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 class RestaurantAppAdminSite(admin.AdminSite):
-    site_header = "Thống kê quán ăn"
+    site_header = "Admin"
     index_template = 'admin/index.html'
 
     def get_urls(self):
@@ -143,3 +143,4 @@ admin_site.register(Table,TableAdmin)
 admin_site.register(Reservation,ReservationAdmin)
 admin_site.register(Payment,PaymentAdmin)
 admin_site.register(Feedback,FeedbackAdmin)
+admin_site.register(Order,OrderAdmin)

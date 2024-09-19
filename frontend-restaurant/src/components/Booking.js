@@ -1,8 +1,8 @@
-import React, { useContext, useEffect, useState } from "react";
-import { faCalendarAlt, faChair, faCheckCircle, faTimesCircle } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-import {Container,Form,Button,Alert,ToggleButton,ToggleButtonGroup,Card,} from "react-bootstrap";
+import React, { useContext, useEffect, useState } from "react";
+import { faCalendarAlt, faChair, faCheckCircle, faTimesCircle, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Container, Form, Button, Alert, ToggleButton, ToggleButtonGroup, Card } from "react-bootstrap";
 import { MyUserContext } from "../App";
 import { authAPIs, endpoints } from "../configs/APIs";
 import { useNavigate } from "react-router";
@@ -14,7 +14,7 @@ const Booking = () => {
   const [selectedTable, setSelectedTable] = useState(null);
   const [reservations, setReservations] = useState([]);
   const [ofusers, setOfusers] = useState([]);
-  const [table,setTable] =  useState([]);
+  const [table, setTable] = useState([]);
   const [tableName, setTableName] = useState("");
   const [capacity, setCapacity] = useState(5);
   const [loading, setLoading] = React.useState(false);
@@ -24,44 +24,42 @@ const Booking = () => {
     try {
       let res = await authAPIs().get(endpoints["booking"]);
       // Lọc dữ liệu theo user.id
-      const filteredData = res.data.filter(
-        (booking) => booking.user === user.id
-      );
+      const filteredData = res.data.filter((booking) => booking.user === user.id);
       setOfusers(filteredData);
-      console.log(filteredData)
-    
+      console.log(filteredData);
     } catch (error) {
-      
+      console.error("Lỗi khi lấy dữ liệu đặt bàn:", error);
     }
-  }
+  };
 
-  const Table = async ()  => {
+  const Table = async () => {
     try {
       let res = await authAPIs().get(endpoints['table']);
-      console.log("thi", res.data);
+      console.log("Dữ liệu bàn:", res.data);
       setTable(res.data);
     } catch (error) {
-      
+      console.error("Lỗi khi lấy dữ liệu bàn:", error);
     }
-  }
+  };
+
   useEffect(() => {
     test();
     Table();
   }, []);
 
-
   const fetchReservations = async () => {
     try {
       const res = await authAPIs().get(endpoints["booking"]);
-      console.log(res.data)
-      setReservations(res.data)
+      console.log(res.data);
+      setReservations(res.data);
       const today = new Date();
       res.data.forEach((reservation) => {
         const reservationDate = new Date(reservation.date);
         if (today > reservationDate) {
-          console.log(`Ngày đặt bàn đã qua: ${reservation.status} `);
-          updateReservationStatus(reservation.id, reservation.status, reservation.date, reservation.use, reservation.table);
-        }});
+          console.log(`Ngày đặt bàn đã qua: ${reservation.status}`);
+          updateReservationStatus(reservation.id, reservation.status, reservation.date, reservation.user, reservation.table);
+        }
+      });
     } catch (err) {
       console.error("Lỗi khi tải dữ liệu đặt bàn:", err);
     }
@@ -69,22 +67,20 @@ const Booking = () => {
 
   const updateReservationStatus = async (reservationID, status, date, user, table) => {
     try {
-      await authAPIs().patch(`${endpoints["booking"]}/${reservationID}`,{
+      await authAPIs().patch(`${endpoints["booking"]}${reservationID}/`, {
         date: `${date}`,
         status: 0,
         user: user,
-        table: table});
+        table: table
+      });
     } catch (err) {
-      setError("Không thể cập nhật trạng thái đặt bàn.");
-      console.error(err);
+      console.error("Lỗi khi cập nhật trạng thái đặt bàn:", err);
     }
   };
 
   useEffect(() => {
     fetchReservations();
   }, []);
-
-
 
   const isTableBooked = (tableId) => {
     return reservations.some(
@@ -109,14 +105,14 @@ const Booking = () => {
     }
 
     // Kiểm tra xem ngày đã chọn có hợp lệ hay không
-  const selectedDate = new Date(date);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Đặt giờ của ngày hiện tại về 0 để chỉ so sánh ngày
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Đặt giờ của ngày hiện tại về 0 để chỉ so sánh ngày
 
-  if (selectedDate < today) {
-    setError("Vui lòng chọn ngày hợp lệ (không phải ngày đã qua).");
-    return;
-  }
+    if (selectedDate < today) {
+      setError("Vui lòng chọn ngày hợp lệ (không phải ngày đã qua).");
+      return;
+    }
 
     try {
       await authAPIs().post(`${endpoints["booking"]}`, {
@@ -126,8 +122,8 @@ const Booking = () => {
         table: selectedTable,
       });
       alert("Đặt bàn thành công!");
-      fetchReservations(); 
-      navigate("/pay")
+      fetchReservations();
+      
     } catch (err) {
       console.info(err.message);
       setError("Không thể đặt bàn. Vui lòng thử lại.");
@@ -137,28 +133,41 @@ const Booking = () => {
 
   const handleAddTable = async () => {
     try {
-      await authAPIs().post(endpoints['table'],{
+      await authAPIs().post(endpoints['table'], {
         name: tableName,
         capacity: capacity,
         is_active: 1
       });
-      alert("Thêm thành công !")
+      alert("Thêm thành công !");
       Table();
     } catch (error) {
-      setError(" Thêm thất bại !")
+      setError("Thêm thất bại !");
     }
-    
-  }
+  };
+
+  const handleDeleteTable = async (tableId) => {
+    try {
+      await authAPIs().delete(`${endpoints['table']}${tableId}/`);
+      alert("Xóa thành công !");
+      Table();
+    } catch (error) {
+      setError("Xóa thất bại !");
+    }
+  };
 
   const handleTableSelect = (val) => {
     setSelectedTable(val);
   };
 
-    // Hàm tìm tên bàn từ ID
-    const getTableName = (tableId) => {
-      const tb = table.find((table) => table.id === tableId);
-      return tb ? tb.name : "Không xác định";
-    };
+  // Hàm tìm tên bàn từ ID
+  const getTableName = (tableId) => {
+    const tb = table.find((table) => table.id === tableId);
+    return tb ? tb.name : "Không xác định";
+  };
+
+  const getStatusClass = (status) => {
+    return status ? "text-success" : "text-danger";
+  };
 
   return (
     <Container className="mt-5">
@@ -166,19 +175,23 @@ const Booking = () => {
       {ofusers.length > 0 ? (
         <ul>
           {ofusers.map((booking) => (
-            <Card key = {booking.id} className="mt-5 mb-5">
-            <Card.Header>Bàn : {getTableName(booking.table)}</Card.Header>
-            <Card.Body>
+            <Card key={booking.id} className="mt-5 mb-5">
+              <Card.Header>Bàn: {getTableName(booking.table)}</Card.Header>
+              <Card.Body>
               <blockquote className="blockquote mb-0">
-                <p>Ngày: {booking.date}</p>
-                <p>Trạng thái: {booking.status ? "Đã xác nhận" : "Đã hoàn thành"}</p>
-              </blockquote>
-            </Card.Body>
-          </Card>
+                  <p>Ngày: {booking.date}</p>
+                  
+                  <p className={getStatusClass(booking.status)}>
+                    Trạng thái: {booking.status ? "Đã xác nhận" : "Đã hoàn thành"}
+                  </p>
+                </blockquote>
+              </Card.Body>
+            </Card>
           ))}
         </ul>
       ) : (
-        <p>Không có đặt bàn nào.</p>
+        <Alert variant="info">Bạn không có bàn đặt nào</Alert>
+
       )}
       <Form>
         <h2>Danh sách bàn ăn</h2>
@@ -195,7 +208,6 @@ const Booking = () => {
               id={`table-${table.id}`}
               value={table.id}
               variant="outline-primary"
-              //variant={isTableBooked(table.id) ? "dark" : "light"} 
               className={`table-card ${isTableBooked(table.id) ? "booked" : ""}`}
               disabled={isTableBooked(table.id)}
             >
@@ -218,11 +230,20 @@ const Booking = () => {
                     />
                   )}
                 </div>
+                {user && user.role === 1 && (
+                  <Button
+                    variant="danger"
+                    onClick={() => handleDeleteTable(table.id)}
+                    className="ms-2"
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </Button>
+                )}
               </div>
             </ToggleButton>
           ))}
         </ToggleButtonGroup>
-          {user && user.role === 1 && (
+        {user && user.role === 1 && (
           <>
             <Button
               loading={loading}

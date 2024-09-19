@@ -1,25 +1,35 @@
 import { useContext, useEffect, useState } from "react";
-import { Spinner, Container, Row, Col, Card, Button } from "react-bootstrap";
 import APIs, { endpoints } from "../configs/APIs";
 import cookie from 'react-cookies';
-import { MyCartContext } from "../App";
+import { MyCartContext, MyCategoryContext, MySearchContext } from "../App";
 import './Style/home.css'; // Import file CSS tuỳ chỉnh
 import { useLocation, useNavigate } from "react-router-dom";
+import { Spinner, Container, Row, Col, Card, Button, Form, InputGroup, Collapse } from "react-bootstrap";
 
 const Home = () => {
   const [products, setProducts] = useState([]); // State để lưu tất cả sản phẩm
   const [filteredProducts, setFilteredProducts] = useState([]); // State để lưu sản phẩm sau khi lọc
   const [loading, setLoading] = useState(true); // State để quản lý trạng thái loading
   const [, dispatch] = useContext(MyCartContext);
+  const { searchTerm } = useContext(MySearchContext); // SearchContext để tìm kiếm
   const navigate = useNavigate();
   const location = useLocation();
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [sortOption, setSortOption] = useState("Mặc định");
+  const [showFilters, setShowFilters] = useState(false);
+  const { selectedCategory } = useContext(MyCategoryContext); 
+ 
 
-  // Hàm tải sản phẩm từ API
+  
+  // Hàm tải danh sách sản phẩm từ API
   const loadProducts = async () => {
     try {
       let res = await APIs.get(endpoints['products']);
-      setProducts(res.data); // Lưu tất cả sản phẩm
-      setFilteredProducts(res.data); // Ban đầu hiển thị tất cả sản phẩm
+      if (res && res.data) {
+        setProducts(res.data); // Lưu tất cả sản phẩm
+        setFilteredProducts(res.data); // Ban đầu hiển thị tất cả sản phẩm
+      }
       setLoading(false); // Dừng trạng thái loading
     } catch (error) {
       console.error("Error fetching products: ", error);
@@ -27,26 +37,30 @@ const Home = () => {
     }
   };
 
-  // Sử dụng effect để tải sản phẩm và lắng nghe sự thay đổi của từ khóa tìm kiếm
+  // Gọi API để tải sản phẩm khi component được mount
   useEffect(() => {
     loadProducts();
   }, []);
 
+  // Lọc sản phẩm theo từ khoá tìm kiếm
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const searchTerm = queryParams.get('kw'); // Lấy từ khóa tìm kiếm từ URL
+    let filtered = [...products];
+
+    if (selectedCategory) {
+        filtered = filtered.filter(product => product.category_id === selectedCategory); 
+        console.log("Sản phẩm sau khi lọc theo danh mục:", filtered); 
+    }
 
     if (searchTerm) {
-      // Lọc sản phẩm dựa trên từ khóa tìm kiếm
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredProducts(filtered); // Lưu sản phẩm đã lọc
-    } else {
-      setFilteredProducts(products); // Hiển thị tất cả sản phẩm nếu không có từ khóa
+        filtered = filtered.filter(product =>
+            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        );
     }
-  }, [location.search, products]); // Lắng nghe sự thay đổi của location.search hoặc products
 
+    setFilteredProducts(filtered);
+}, [searchTerm, selectedCategory, products]);
+  // Hàm thêm sản phẩm vào giỏ hàng
   const addToCart = (p) => {
     let cart = cookie.load("cart") || null;
     if (cart === null)
@@ -70,9 +84,47 @@ const Home = () => {
     });
   };
 
+  
+
+  // Hàm xem chi tiết sản phẩm
   const handleViewDetail = (productId) => {
     navigate(`/products/${productId}`);
   };
+
+  // Hàm áp dụng bộ lọc và sắp xếp
+  const applyFilterAndSort = () => {
+    let filtered = [...products];
+
+    if (minPrice) {
+      filtered = filtered.filter(product => product.price >= minPrice);
+    }
+    if (maxPrice) {
+      filtered = filtered.filter(product => product.price <= maxPrice);
+    }
+
+    // Sắp xếp sản phẩm dựa theo tuỳ chọn sắp xếp
+    if (sortOption === 'priceAsc') {
+      filtered = filtered.sort((a, b) => a.price - b.price);
+    } else if (sortOption === 'priceDesc') {
+      filtered = filtered.sort((a, b) => b.price - a.price);
+    } else if (sortOption === 'rateAsc') {
+      filtered = filtered.sort((a, b) => a.rate - b.rate);
+    } else if (sortOption === 'rateDesc') {
+      filtered = filtered.sort((a, b) => b.rate - a.rate);
+    }
+
+    setFilteredProducts(filtered);
+  };
+  const resetfilter =()=>{
+
+    setMinPrice("");
+    setMaxPrice("");
+    setSortOption("Mặc định");
+
+    setFilteredProducts(products);
+
+
+  }
 
   // Hiển thị loading spinner nếu dữ liệu đang được tải
   if (loading) {
@@ -82,6 +134,68 @@ const Home = () => {
   return (
     <Container className="mt-4">
       <h1 className="text-center text-primary mb-4">Danh Sách Sản phẩm</h1>
+      <Row className="mb-4">
+        <Col className="text-end">
+          <Button
+            variant="primary"
+            onClick={() => setShowFilters(!showFilters)}
+            aria-controls="example-collapse-text"
+            aria-expanded={showFilters}
+            className="filter-button"
+          >
+            Lọc & Sắp xếp
+          </Button>
+        </Col>
+      </Row>
+
+      <Collapse in={showFilters}>
+        <div id="example-collapse-text">
+          <Row className="justify-content-end mb-4">
+            <Col md="auto">
+              <InputGroup>
+                <InputGroup.Text>Mức giá</InputGroup.Text>
+                <Form.Control
+                  type="number"
+                  placeholder="Mức giá từ"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  step="10000"
+                />
+                <InputGroup.Text>-</InputGroup.Text>
+                <Form.Control
+                  type="number"
+                  placeholder="Mức giá đến"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  step="10000"
+                />
+              </InputGroup>
+            </Col>
+
+            <Col md="auto">
+              <Form.Select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+                <option value="Mặc định">Mặc định</option>
+                <option value="priceAsc">Giá tăng dần</option>
+                <option value="priceDesc">Giá giảm dần</option>
+                <option value="rateAsc">Đánh giá tăng dần</option>
+                <option value="rateDesc">Đánh giá giảm dần</option>
+              </Form.Select>
+            </Col>
+
+            <Col md="auto">
+              <Button variant="primary" onClick={applyFilterAndSort}>
+                <i className="fas fa-filter"></i> Áp dụng
+              </Button>
+            </Col>
+            <Col md="auto">
+              <Button variant="primary" onClick={resetfilter}>
+                <i className="fas fa-filter"></i> Reset
+              </Button>
+            </Col>
+          </Row>
+        </div>
+      </Collapse>
+
       <Row>
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (

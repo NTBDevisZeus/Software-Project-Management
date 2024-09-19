@@ -14,6 +14,7 @@ const MyCartReducer = (currentState, action)=>{
         }
         
     }else if(action.type==='paid')
+        
         return 0;
 
     return currentState;    

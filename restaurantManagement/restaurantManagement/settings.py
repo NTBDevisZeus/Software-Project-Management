@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'cloudinary',
     'drf_yasg',
     'djf_surveys',
-    'corsheaders' #chien them
+    'corsheaders',
+    'django_extensions',
 ]
 
 import cloudinary.uploader
@@ -117,6 +118,18 @@ DATABASES = {
     }
 }
 
+MOMO_CONFIG = {
+    'partner_code': 'MOMO',
+    'access_key': 'F8BBA842ECF85',
+    'secret_key': 'K951B6PE1waDMi640xX08PD3vg6EkVlz',
+    'endpoint': 'https://test-payment.momo.vn/gw_payment/transactionProcessor',
+    'return_url': 'https://c125-2405-4802-9072-e860-995-7b-25ab-5ef2.ngrok-free.app/momo_return',
+    'notify_url': 'https://c125-2405-4802-9072-e860-995-7b-25ab-5ef2.ngrok-free.app/momo_notify',
+}
+
+
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -172,3 +185,8 @@ CLIENT_SECRET = '1uh5kSJIkjLZLu2gGhfzT6YhaFCfkAAT7yzHUiK90ayJC6DZeuGIYCTR5ejSkdt
 # CLIENT_SECRET = 'hdgFevbzsC0nbce7RkAEcMWOHEO7VmysHW5ox1D2qLVtpwfKnfdx0whSvAQuV8RlZ0mLoZBMWJgKFVz9uC68KgmloTM2cXHWqlySg17E2MFUjeq4lRGvTpYkczNE143T'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+VNPAY_URL = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'  # get from config
+VNPAY_API_URL = 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction'
+VNPAY_TMN_CODE = 'CGXZLS0Z'  # Website ID in VNPAY System, get from config
+VNPAY_HASH_SECRET = 'XNBCJFAKAZQSGTARRLGCHVZWCIOIGSHN'  # Secret key for create checksum,get from config
